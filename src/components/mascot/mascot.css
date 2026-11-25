@@ -1,0 +1,246 @@
+.isb-mascot {
+  position: fixed;
+  z-index: 29;
+  left: max(1rem, env(safe-area-inset-left, 0px));
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+  font-family: var(--font-sans);
+}
+
+.isb-mascot[hidden] {
+  display: none;
+}
+
+.isb-mascot-panel {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  inline-size: clamp(7rem, 18vw, 8rem);
+}
+
+.isb-mascot-stage {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  aspect-ratio: 3 / 4;
+  margin-block-end: clamp(-11px, -1.1vw, -7px);
+  filter: drop-shadow(0 3px 4px rgb(3 8 20 / .38));
+}
+
+.isb-mascot-viewport {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: hidden;
+}
+
+.isb-mascot-render-surface {
+  position: absolute;
+  inset: 0;
+}
+
+.isb-mascot-viewport canvas {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.isb-mascot-viewport[data-mascot-render="fallback"] canvas {
+  display: none;
+}
+
+.isb-mascot-stage .isb-mascot-emblem {
+  transform: scale(1.7);
+}
+
+.isb-mascot-caption {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  top: var(--mascot-head-top, 14%);
+  left: 50%;
+  translate: -50% calc(-100% - .45rem);
+  inline-size: max-content;
+  max-inline-size: min(calc(100% + 1.125rem), 45vw);
+  padding: .46rem .62rem;
+  margin: 0;
+  color: #f5f8fc;
+  background: #101b2e;
+  border: 1px solid #41567b;
+  border-radius: .75rem;
+  font-size: .78rem;
+  line-height: 1.55;
+  box-shadow: 0 .375rem 1.25rem rgb(3 8 20 / .36);
+  animation: isb-mascot-caption-in 180ms ease-out both;
+}
+
+.isb-mascot-caption::after {
+  position: absolute;
+  content: "";
+  left: 50%;
+  bottom: -4px;
+  width: 7px;
+  height: 7px;
+  translate: -50% 0;
+  rotate: 45deg;
+  background: inherit;
+  border-right: 1px solid #41567b;
+  border-bottom: 1px solid #41567b;
+}
+
+.isb-mascot-caption p {
+  margin: 0;
+  text-align: center;
+}
+
+.isb-mascot-consult {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: .4rem;
+  min-block-size: 44px;
+  inline-size: max-content;
+  padding-inline: .7rem;
+  color: #f5f8fc;
+  background: linear-gradient(180deg, #243a5f, #14223b 64%);
+  border: 1px solid #5473a0;
+  border-radius: 12px;
+  box-shadow: inset 0 1px rgb(230 242 255 / .18), 0 5px 13px rgb(2 7 17 / .5);
+  font-size: .75rem;
+  font-weight: 700;
+  line-height: 1.3;
+  pointer-events: auto;
+}
+
+.isb-mascot-consult::before {
+  position: absolute;
+  content: "";
+  top: -5px;
+  left: 50%;
+  width: 57%;
+  height: 9px;
+  translate: -50% 0;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #7f9abe 0%, #496891 54%, transparent 75%);
+  opacity: .54;
+  pointer-events: none;
+}
+
+.isb-mascot-consult:hover {
+  background: linear-gradient(180deg, #2d4c77, #1b3052 64%);
+  border-color: #83a8e4;
+}
+
+.isb-mascot-voice {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  inline-size: 2rem;
+  block-size: 2rem;
+  padding: 0;
+  color: #f5f8fc;
+  background: transparent;
+  border: 1px solid #41567b;
+  border-radius: 999px;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.isb-mascot-voice:hover {
+  border-color: #6f9bff;
+  background: #1c2e4a;
+}
+
+.isb-mascot-consult:focus-visible,
+.isb-mascot-voice:focus-visible {
+  outline: 2px solid #a9c3ff;
+  outline-offset: 2px;
+}
+
+.isb-mascot-emblem {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  inline-size: 23px;
+  block-size: 26px;
+  line-height: 0;
+  direction: ltr;
+}
+
+.isb-mascot-emblem::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #5072a6;
+  clip-path: polygon(50% 0, 66% 9%, 66% 20%, 78% 24%, 78% 37%, 91% 43%, 99% 66%, 88% 84%, 69% 94%, 57% 94%, 57% 100%, 44% 100%, 44% 94%, 31% 94%, 12% 84%, 1% 66%, 9% 43%, 22% 37%, 22% 24%, 34% 20%, 34% 9%);
+}
+
+.isb-mascot-emblem-face {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-block-start: 5px;
+  inline-size: 15px;
+  block-size: 15px;
+  background: #f4eae2;
+  border-radius: 45% 45% 48% 48%;
+}
+
+.isb-mascot-emblem-face i {
+  display: block;
+  inline-size: 2px;
+  block-size: 4px;
+  border-radius: 50%;
+  background: #101523;
+}
+
+.isb-mascot-emblem-bow {
+  position: absolute;
+  top: 5px;
+  right: -1px;
+  inline-size: 9px;
+  block-size: 7px;
+  border-radius: 65% 45%;
+  background: #a5bd76;
+  transform: rotate(24deg);
+}
+
+@media (min-width: 1024px) {
+  .isb-mascot {
+    left: max(1.5rem, env(safe-area-inset-left, 0px));
+  }
+
+  .isb-mascot-panel {
+    inline-size: 9.5rem;
+  }
+
+}
+
+@media (max-height: 540px) {
+  .isb-mascot-stage {
+    inline-size: min(100%, 25svh);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .isb-mascot-caption {
+    animation: none;
+  }
+}
+
+@keyframes isb-mascot-caption-in {
+  from { opacity: 0; transform: translateY(.2rem); }
+  to { opacity: 1; transform: translateY(0); }
+}

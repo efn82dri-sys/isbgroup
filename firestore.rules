@@ -1,0 +1,825 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 1: Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Shared hardened primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAuthenticatedMember() {
+      return isSignedIn() && (
+        request.auth.token.email_verified == true ||
+        ('phone_number' in request.auth.token && request.auth.token.phone_number is string && request.auth.token.phone_number.size() >= 7) ||
+        ('firebase' in request.auth.token && request.auth.token.firebase.sign_in_provider == 'password')
+      );
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        request.auth.token.email == 'isbgroup58@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isOptionalString(data, key, maxLen) {
+      return !(key in data) || (data[key] is string && data[key].size() <= maxLen);
+    }
+
+    function isOptionalNumber(data, key, minVal, maxVal) {
+      return !(key in data) || (data[key] is number && data[key] >= minVal && data[key] <= maxVal);
+    }
+
+    function isOptionalTimestamp(data, key) {
+      return !(key in data) || (data[key] is timestamp);
+    }
+
+    function isOptionalBool(data, key) {
+      return !(key in data) || (data[key] is bool);
+    }
+
+    function isOptionalStringList(data, key, maxItems) {
+      return !(key in data) || (
+        data[key] is list
+        && data[key].size() <= maxItems
+        && (data[key].size() == 0 || data[key][0] is string)
+      );
+    }
+
+    function isOptionalMapList(data, key, maxItems) {
+      return !(key in data) || (
+        data[key] is list
+        && data[key].size() <= maxItems
+        && (data[key].size() == 0 || data[key][0] is map)
+      );
+    }
+
+    function isValidEmail(val) {
+      return val is string && val.size() >= 5 && val.size() <= 160 && val.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$');
+    }
+
+    function isOptionalValidEmail(val) {
+      return val is string && (val == '' || isValidEmail(val));
+    }
+
+    // Entity validators (Pillar 2: Validation Blueprints)
+    function isValidSiteSettings(data) {
+      return data.keys().hasAll(['brandNameEn', 'brandNameFa', 'instagramUrl', 'updatedAt'])
+        && data.keys().hasOnly([
+          'brandNameEn', 'brandNameFa', 'instagramUrl', 'linkedinUrl',
+          'youtubeUrl', 'telegramUrl', 'whatsappUrl', 'publicEmail', 'publicPhone',
+          'studioCityEn', 'studioCityFa',
+          'teamCoverImage', 'teamCoverCaptionEn', 'teamCoverCaptionFa',
+          'heroTitleEn', 'heroTitleFa', 'heroSubtitleEn', 'heroSubtitleFa',
+          'aboutLeadEn', 'aboutLeadFa', 'hiddenSeedProjectSlugs',
+          'hiddenSeedCourseSlugs', 'hiddenSeedPartnerIds', 'hiddenSeedInsightSlugs',
+          'hiddenSeedMaterialIds',
+          'paymentInstructionsFa', 'paymentInstructionsEn', 'updatedAt'
+        ])
+        && data.brandNameEn is string && data.brandNameEn.size() >= 1 && data.brandNameEn.size() <= 120
+        && data.brandNameFa is string && data.brandNameFa.size() >= 1 && data.brandNameFa.size() <= 120
+        && data.instagramUrl is string && data.instagramUrl.size() <= 240
+        && isOptionalString(data, 'linkedinUrl', 240)
+        && isOptionalString(data, 'youtubeUrl', 240)
+        && isOptionalString(data, 'telegramUrl', 240)
+        && isOptionalString(data, 'whatsappUrl', 240)
+        && isOptionalString(data, 'publicEmail', 160)
+        && isOptionalString(data, 'publicPhone', 60)
+        && isOptionalString(data, 'studioCityEn', 120)
+        && isOptionalString(data, 'studioCityFa', 120)
+        && isOptionalString(data, 'teamCoverImage', 500)
+        && isOptionalString(data, 'teamCoverCaptionEn', 200)
+        && isOptionalString(data, 'teamCoverCaptionFa', 200)
+        && isOptionalString(data, 'heroTitleEn', 160)
+        && isOptionalString(data, 'heroTitleFa', 160)
+        && isOptionalString(data, 'heroSubtitleEn', 400)
+        && isOptionalString(data, 'heroSubtitleFa', 400)
+        && isOptionalString(data, 'aboutLeadEn', 800)
+        && isOptionalString(data, 'aboutLeadFa', 800)
+        && isOptionalStringList(data, 'hiddenSeedProjectSlugs', 20)
+        && isOptionalStringList(data, 'hiddenSeedCourseSlugs', 20)
+        && isOptionalStringList(data, 'hiddenSeedPartnerIds', 32)
+        && isOptionalStringList(data, 'hiddenSeedInsightSlugs', 20)
+        && isOptionalStringList(data, 'hiddenSeedMaterialIds', 20)
+        && isOptionalString(data, 'paymentInstructionsFa', 600)
+        && isOptionalString(data, 'paymentInstructionsEn', 600)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMediaAsset(data) {
+      return data.keys().hasAll(['dataUrl', 'contentType', 'sizeBytes', 'createdAt'])
+        && data.keys().hasOnly(['dataUrl', 'contentType', 'sizeBytes', 'width', 'height', 'createdAt'])
+        && data.contentType in ['image/webp', 'image/jpeg', 'image/png']
+        && data.dataUrl is string
+        && data.dataUrl.size() >= 32
+        && data.dataUrl.size() <= 480000
+        && data.dataUrl.matches('^data:image/(webp|jpeg|png);base64,[A-Za-z0-9+/=]+$')
+        && data.sizeBytes is number && data.sizeBytes > 0 && data.sizeBytes <= 480000
+        && isOptionalNumber(data, 'width', 1, 4096)
+        && isOptionalNumber(data, 'height', 1, 4096)
+        && data.createdAt is timestamp;
+    }
+
+    function isValidProject(data) {
+      return data.keys().hasAll([
+          'slug', 'titleEn', 'titleFa', 'cityEn', 'cityFa', 'category',
+          'serviceEn', 'serviceFa', 'disciplines', 'coverImage',
+          'imageDisclosure', 'featuredOrder', 'status', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'slug', 'titleEn', 'titleFa', 'cityEn', 'cityFa', 'category',
+          'serviceEn', 'serviceFa', 'disciplines', 'roleEn', 'roleFa',
+          'briefEn', 'briefFa', 'approachEn', 'approachFa',
+          'year', 'areaSqm', 'coverImage', 'gallery',
+          'imageDisclosure', 'featuredOrder', 'status', 'updatedAt'
+        ])
+        && data.slug is string && data.slug.size() >= 2 && data.slug.size() <= 100 && data.slug.matches('^[a-z0-9\\-]+$')
+        && data.titleEn is string && data.titleEn.size() >= 2 && data.titleEn.size() <= 160
+        && data.titleFa is string && data.titleFa.size() >= 2 && data.titleFa.size() <= 160
+        && data.cityEn is string && data.cityEn.size() >= 2 && data.cityEn.size() <= 100
+        && data.cityFa is string && data.cityFa.size() >= 2 && data.cityFa.size() <= 100
+        && data.category in ['administrative', 'residential', 'urban-park', 'mixed-use', 'cultural', 'industrial', 'educational']
+        && data.serviceEn is string && data.serviceEn.size() >= 2 && data.serviceEn.size() <= 100
+        && data.serviceFa is string && data.serviceFa.size() >= 2 && data.serviceFa.size() <= 100
+        && data.disciplines is list && data.disciplines.size() >= 1 && data.disciplines.size() <= 3
+        && data.disciplines[0] is string
+        && isOptionalString(data, 'roleEn', 300)
+        && isOptionalString(data, 'roleFa', 300)
+        && isOptionalString(data, 'briefEn', 1500)
+        && isOptionalString(data, 'briefFa', 1500)
+        && isOptionalString(data, 'approachEn', 1500)
+        && isOptionalString(data, 'approachFa', 1500)
+        && isOptionalString(data, 'year', 20)
+        && isOptionalString(data, 'areaSqm', 60)
+        && data.coverImage is string && data.coverImage.size() >= 1 && data.coverImage.size() <= 500
+        && isOptionalStringList(data, 'gallery', 8)
+        && data.imageDisclosure in ['concept', 'photograph']
+        && data.featuredOrder is number && data.featuredOrder >= 0 && data.featuredOrder <= 999
+        && data.status in ['draft', 'published']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidInsight(data) {
+      return data.keys().hasAll([
+          'slug', 'titleEn', 'titleFa', 'excerptEn', 'excerptFa',
+          'bodyEn', 'bodyFa', 'topic', 'publishedDate', 'status', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'slug', 'titleEn', 'titleFa', 'subtitleEn', 'subtitleFa',
+          'excerptEn', 'excerptFa', 'bodyEn', 'bodyFa',
+          'coverImage', 'coverCaptionEn', 'coverCaptionFa',
+          'authorEn', 'authorFa', 'authorRoleEn', 'authorRoleFa',
+          'readingTimeMinutes', 'featured', 'tagsEn', 'tagsFa', 'blocks',
+          'topic', 'publishedDate', 'status', 'updatedAt'
+        ])
+        && data.slug is string && data.slug.size() >= 2 && data.slug.size() <= 120 && data.slug.matches('^[a-z0-9\\-]+$')
+        && data.titleEn is string && data.titleEn.size() >= 2 && data.titleEn.size() <= 200
+        && data.titleFa is string && data.titleFa.size() >= 2 && data.titleFa.size() <= 200
+        && isOptionalString(data, 'subtitleEn', 300)
+        && isOptionalString(data, 'subtitleFa', 300)
+        && data.excerptEn is string && data.excerptEn.size() >= 2 && data.excerptEn.size() <= 600
+        && data.excerptFa is string && data.excerptFa.size() >= 2 && data.excerptFa.size() <= 600
+        && data.bodyEn is string && data.bodyEn.size() >= 2 && data.bodyEn.size() <= 24000
+        && data.bodyFa is string && data.bodyFa.size() >= 2 && data.bodyFa.size() <= 24000
+        && isOptionalString(data, 'coverImage', 500)
+        && isOptionalString(data, 'coverCaptionEn', 300)
+        && isOptionalString(data, 'coverCaptionFa', 300)
+        && isOptionalString(data, 'authorEn', 120)
+        && isOptionalString(data, 'authorFa', 120)
+        && isOptionalString(data, 'authorRoleEn', 140)
+        && isOptionalString(data, 'authorRoleFa', 140)
+        && isOptionalNumber(data, 'readingTimeMinutes', 1, 120)
+        && isOptionalBool(data, 'featured')
+        && isOptionalStringList(data, 'tagsEn', 8)
+        && isOptionalStringList(data, 'tagsFa', 8)
+        && isOptionalMapList(data, 'blocks', 40)
+        && data.topic in ['architecture', 'energy-mep', 'structure-seismic', 'sustainability-lab']
+        && data.publishedDate is string && data.publishedDate.size() >= 4 && data.publishedDate.size() <= 30
+        && data.status in ['draft', 'published']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTeamMember(data) {
+      return data.keys().hasAll([
+          'nameEn', 'nameFa', 'roleEn', 'roleFa', 'discipline', 'order', 'status', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'nameEn', 'nameFa', 'roleEn', 'roleFa', 'discipline', 'tier',
+          'bioEn', 'bioFa', 'specialtiesEn', 'specialtiesFa',
+          'resumeEn', 'resumeFa', 'linkedinUrl',
+          'portraitUrl', 'order', 'status', 'updatedAt'
+        ])
+        && data.nameEn is string && data.nameEn.size() >= 2 && data.nameEn.size() <= 120
+        && data.nameFa is string && data.nameFa.size() >= 2 && data.nameFa.size() <= 120
+        && data.roleEn is string && data.roleEn.size() >= 2 && data.roleEn.size() <= 140
+        && data.roleFa is string && data.roleFa.size() >= 2 && data.roleFa.size() <= 140
+        && data.discipline in ['architecture-urbanism', 'energy-mep', 'structure-seismic', 'leadership']
+        && (!('tier' in data) || data.tier in ['ceo', 'inspector', 'board', 'director', 'specialist', 'member', 'advisor'])
+        && isOptionalString(data, 'bioEn', 800)
+        && isOptionalString(data, 'bioFa', 800)
+        && isOptionalString(data, 'specialtiesEn', 400)
+        && isOptionalString(data, 'specialtiesFa', 400)
+        && isOptionalString(data, 'resumeEn', 3000)
+        && isOptionalString(data, 'resumeFa', 3000)
+        && isOptionalString(data, 'linkedinUrl', 240)
+        && isOptionalString(data, 'portraitUrl', 500)
+        && data.order is number && data.order >= 0 && data.order <= 999
+        && data.status in ['draft', 'published']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidPartnerLogo(data) {
+      return data.keys().hasAll(['nameFa', 'nameEn', 'order', 'status', 'updatedAt'])
+        && data.keys().hasOnly([
+          'nameFa', 'nameEn', 'descriptionFa', 'descriptionEn',
+          'logoUrl', 'presetMarkId', 'websiteUrl', 'order', 'status', 'updatedAt'
+        ])
+        && data.nameFa is string && data.nameFa.size() >= 1 && data.nameFa.size() <= 120
+        && data.nameEn is string && data.nameEn.size() >= 1 && data.nameEn.size() <= 120
+        && isOptionalString(data, 'descriptionFa', 240)
+        && isOptionalString(data, 'descriptionEn', 240)
+        && isOptionalString(data, 'logoUrl', 500)
+        && isOptionalString(data, 'presetMarkId', 60)
+        && isOptionalString(data, 'websiteUrl', 240)
+        && data.order is number && data.order >= 0 && data.order <= 999
+        && data.status in ['draft', 'published']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidMaterial(data) {
+      return data.keys().hasAll([
+          'slug', 'titleFa', 'titleEn', 'category', 'coverImage',
+          'order', 'status', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'slug', 'titleFa', 'titleEn', 'subtitleFa', 'subtitleEn',
+          'summaryFa', 'summaryEn', 'category', 'brandNameFa', 'brandNameEn',
+          'performanceMetric', 'performanceLabelFa', 'performanceLabelEn',
+          'standardRefFa', 'standardRefEn', 'applicationFa', 'applicationEn',
+          'coverImage', 'certificates', 'catalogUrl', 'catalogLabelFa', 'catalogLabelEn',
+          'partnerIds', 'featured', 'order', 'status', 'updatedAt'
+        ])
+        && data.slug is string && data.slug.size() >= 2 && data.slug.size() <= 100 && data.slug.matches('^[a-z0-9\\-]+$')
+        && data.titleFa is string && data.titleFa.size() >= 2 && data.titleFa.size() <= 160
+        && data.titleEn is string && data.titleEn.size() >= 2 && data.titleEn.size() <= 160
+        && isOptionalString(data, 'subtitleFa', 220)
+        && isOptionalString(data, 'subtitleEn', 220)
+        && isOptionalString(data, 'summaryFa', 1200)
+        && isOptionalString(data, 'summaryEn', 1200)
+        && data.category in ['thermal-envelope', 'lightweight-structure', 'facade-glazing', 'smart-energy']
+        && isOptionalString(data, 'brandNameFa', 120)
+        && isOptionalString(data, 'brandNameEn', 120)
+        && isOptionalString(data, 'performanceMetric', 40)
+        && isOptionalString(data, 'performanceLabelFa', 100)
+        && isOptionalString(data, 'performanceLabelEn', 100)
+        && isOptionalString(data, 'standardRefFa', 120)
+        && isOptionalString(data, 'standardRefEn', 120)
+        && isOptionalString(data, 'applicationFa', 240)
+        && isOptionalString(data, 'applicationEn', 240)
+        && data.coverImage is string && data.coverImage.size() >= 1 && data.coverImage.size() <= 500
+        && isOptionalMapList(data, 'certificates', 8)
+        && isOptionalString(data, 'catalogUrl', 500)
+        && isOptionalString(data, 'catalogLabelFa', 120)
+        && isOptionalString(data, 'catalogLabelEn', 120)
+        && isOptionalStringList(data, 'partnerIds', 8)
+        && isOptionalBool(data, 'featured')
+        && data.order is number && data.order >= 0 && data.order <= 999
+        && data.status in ['draft', 'published']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCourse(data) {
+      return data.keys().hasAll([
+          'slug', 'titleFa', 'titleEn', 'department', 'format',
+          'instructorFa', 'instructorEn', 'durationFa', 'durationEn',
+          'priceToman', 'summaryFa', 'summaryEn', 'coverImage',
+          'featuredOrder', 'status', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'slug', 'titleFa', 'titleEn', 'department', 'format',
+          'instructorFa', 'instructorEn', 'durationFa', 'durationEn',
+          'scheduleFa', 'scheduleEn', 'priceToman', 'originalPriceToman',
+          'capacity', 'summaryFa', 'summaryEn', 'syllabusFa', 'syllabusEn',
+          'coverImage', 'paymentUrl', 'paymentNoteFa', 'paymentNoteEn',
+          'accessUrl', 'featuredOrder', 'status', 'updatedAt'
+        ])
+        && data.slug is string && data.slug.size() >= 2 && data.slug.size() <= 100 && data.slug.matches('^[a-z0-9\\-]+$')
+        && data.titleFa is string && data.titleFa.size() >= 2 && data.titleFa.size() <= 160
+        && data.titleEn is string && data.titleEn.size() >= 2 && data.titleEn.size() <= 160
+        && data.department in ['architecture-urbanism', 'energy-mep', 'structure-seismic', 'multidisciplinary']
+        && data.format in ['online-live', 'recorded', 'in-person', 'hybrid']
+        && data.instructorFa is string && data.instructorFa.size() >= 2 && data.instructorFa.size() <= 120
+        && data.instructorEn is string && data.instructorEn.size() >= 2 && data.instructorEn.size() <= 120
+        && data.durationFa is string && data.durationFa.size() >= 2 && data.durationFa.size() <= 80
+        && data.durationEn is string && data.durationEn.size() >= 2 && data.durationEn.size() <= 80
+        && isOptionalString(data, 'scheduleFa', 160)
+        && isOptionalString(data, 'scheduleEn', 160)
+        && data.priceToman is number && data.priceToman >= 0 && data.priceToman <= 500000000
+        && isOptionalNumber(data, 'originalPriceToman', 0, 500000000)
+        && isOptionalNumber(data, 'capacity', 1, 10000)
+        && data.summaryFa is string && data.summaryFa.size() >= 5 && data.summaryFa.size() <= 1500
+        && data.summaryEn is string && data.summaryEn.size() >= 5 && data.summaryEn.size() <= 1500
+        && isOptionalStringList(data, 'syllabusFa', 16)
+        && isOptionalStringList(data, 'syllabusEn', 16)
+        && data.coverImage is string && data.coverImage.size() >= 1 && data.coverImage.size() <= 500
+        && isOptionalString(data, 'paymentUrl', 500)
+        && isOptionalString(data, 'paymentNoteFa', 600)
+        && isOptionalString(data, 'paymentNoteEn', 600)
+        && isOptionalString(data, 'accessUrl', 500)
+        && data.featuredOrder is number && data.featuredOrder >= 0 && data.featuredOrder <= 999
+        && data.status in ['draft', 'published']
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidInquiry(data) {
+      return data.keys().hasAll([
+          'fullName', 'email', 'projectType', 'disciplines',
+          'message', 'locale', 'internalStatus', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'userId', 'fullName', 'email', 'phone', 'organization', 'projectType',
+          'disciplines', 'city', 'message', 'locale', 'internalStatus',
+          'adminReply', 'adminNotes', 'repliedAt', 'createdAt'
+        ])
+        && (!('userId' in data) || isValidId(data.userId))
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 120
+        && isValidEmail(data.email)
+        && isOptionalString(data, 'phone', 40)
+        && isOptionalString(data, 'organization', 140)
+        && data.projectType is string && data.projectType.size() >= 2 && data.projectType.size() <= 80
+        && data.disciplines is list && data.disciplines.size() >= 1 && data.disciplines.size() <= 4
+        && data.disciplines[0] is string
+        && isOptionalString(data, 'city', 100)
+        && data.message is string && data.message.size() >= 10 && data.message.size() <= 3000
+        && data.locale in ['en', 'fa']
+        && data.internalStatus in ['new', 'reviewing', 'contacted', 'archived']
+        && isOptionalString(data, 'adminReply', 4000)
+        && isOptionalString(data, 'adminNotes', 2000)
+        && isOptionalTimestamp(data, 'repliedAt')
+        && data.createdAt is timestamp;
+    }
+
+    function isValidAssessmentRequest(data) {
+      return data.keys().hasAll([
+          'fullName', 'email', 'projectType', 'city', 'approximateFloorAreaSqm',
+          'projectStage', 'assessmentGoals', 'locale', 'internalStatus', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'userId', 'fullName', 'email', 'phone', 'organization', 'projectType', 'city',
+          'approximateFloorAreaSqm', 'projectStage', 'assessmentGoals',
+          'notes', 'locale', 'internalStatus',
+          'adminReply', 'adminNotes', 'repliedAt', 'createdAt'
+        ])
+        && (!('userId' in data) || isValidId(data.userId))
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 120
+        && isValidEmail(data.email)
+        && isOptionalString(data, 'phone', 40)
+        && isOptionalString(data, 'organization', 140)
+        && data.projectType is string && data.projectType.size() >= 2 && data.projectType.size() <= 80
+        && data.city is string && data.city.size() >= 2 && data.city.size() <= 100
+        && data.approximateFloorAreaSqm is number && data.approximateFloorAreaSqm >= 20 && data.approximateFloorAreaSqm <= 5000000
+        && data.projectStage in ['concept', 'schematic', 'detailed', 'construction', 'existing']
+        && data.assessmentGoals is list && data.assessmentGoals.size() >= 1 && data.assessmentGoals.size() <= 6
+        && data.assessmentGoals[0] is string
+        && isOptionalString(data, 'notes', 2000)
+        && data.locale in ['en', 'fa']
+        && data.internalStatus in ['new', 'reviewing', 'scheduled', 'completed', 'archived']
+        && isOptionalString(data, 'adminReply', 4000)
+        && isOptionalString(data, 'adminNotes', 2000)
+        && isOptionalTimestamp(data, 'repliedAt')
+        && data.createdAt is timestamp;
+    }
+
+    function isValidAdminUser(data) {
+      return data.keys().hasAll(['email', 'role', 'createdAt'])
+        && data.keys().hasOnly(['email', 'role', 'createdAt'])
+        && isValidEmail(data.email)
+        && data.role in ['admin', 'editor']
+        && data.createdAt is timestamp;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'email', 'fullName', 'role', 'createdAt', 'updatedAt', 'lastLoginAt'])
+        && data.keys().hasOnly([
+          'uid', 'email', 'fullName', 'displayName', 'photoURL', 'phone',
+          'nationalId', 'city', 'organization', 'profession', 'billingAddress',
+          'locale', 'role', 'createdAt', 'updatedAt', 'lastLoginAt'
+        ])
+        && isValidId(data.uid)
+        && isOptionalValidEmail(data.email)
+        && (data.email != '' || ('phone' in data && data.phone is string && data.phone.size() >= 7))
+        && data.fullName is string && data.fullName.size() >= 2 && data.fullName.size() <= 120
+        && isOptionalString(data, 'displayName', 120)
+        && isOptionalString(data, 'photoURL', 500)
+        && isOptionalString(data, 'phone', 40)
+        && isOptionalString(data, 'nationalId', 20)
+        && isOptionalString(data, 'city', 100)
+        && isOptionalString(data, 'organization', 140)
+        && isOptionalString(data, 'profession', 120)
+        && isOptionalString(data, 'billingAddress', 500)
+        && (!('locale' in data) || data.locale in ['en', 'fa'])
+        && data.role in ['member', 'admin']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && data.lastLoginAt is timestamp;
+    }
+
+    function isValidUserOrder(data) {
+      return data.keys().hasAll([
+          'orderNumber', 'userId', 'userEmail', 'userFullName', 'itemType',
+          'titleFa', 'titleEn', 'amountToman', 'paymentStatus', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'orderNumber', 'userId', 'userEmail', 'userFullName', 'userPhone',
+          'courseId', 'itemType', 'titleFa', 'titleEn', 'amountToman',
+          'paymentStatus', 'paymentGateway', 'paymentRef', 'notes', 'accessUrl',
+          'createdAt', 'updatedAt', 'paidAt'
+        ])
+        && data.orderNumber is string && data.orderNumber.size() >= 4 && data.orderNumber.size() <= 40 && data.orderNumber.matches('^[A-Z0-9\\-]+$')
+        && isValidId(data.userId)
+        && isOptionalValidEmail(data.userEmail)
+        && data.userFullName is string && data.userFullName.size() >= 2 && data.userFullName.size() <= 120
+        && isOptionalString(data, 'userPhone', 40)
+        && (!('courseId' in data) || isValidId(data.courseId))
+        && data.itemType in ['course', 'workshop', 'consultation', 'publication']
+        && data.titleFa is string && data.titleFa.size() >= 2 && data.titleFa.size() <= 180
+        && data.titleEn is string && data.titleEn.size() >= 2 && data.titleEn.size() <= 180
+        && data.amountToman is number && data.amountToman >= 0 && data.amountToman <= 5000000000
+        && data.paymentStatus in ['pending', 'paid', 'cancelled', 'refunded']
+        && isOptionalString(data, 'paymentGateway', 60)
+        && isOptionalString(data, 'paymentRef', 120)
+        && isOptionalString(data, 'notes', 1500)
+        && isOptionalString(data, 'accessUrl', 500)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && isOptionalTimestamp(data, 'paidAt');
+    }
+
+    function isValidSupportTicket(data) {
+      return data.keys().hasAll([
+          'ticketNumber', 'userId', 'userEmail', 'userFullName', 'subject',
+          'category', 'priority', 'status', 'initialMessage', 'lastReplyBy',
+          'replyCount', 'locale', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ticketNumber', 'userId', 'userEmail', 'userFullName', 'subject',
+          'category', 'priority', 'status', 'initialMessage', 'orderNumber',
+          'lastReplyBy', 'replyCount', 'adminNotes', 'locale',
+          'createdAt', 'updatedAt', 'lastReplyAt'
+        ])
+        && data.ticketNumber is string && data.ticketNumber.size() >= 4 && data.ticketNumber.size() <= 40 && data.ticketNumber.matches('^[A-Z0-9\\-]+$')
+        && isValidId(data.userId)
+        && isOptionalValidEmail(data.userEmail)
+        && data.userFullName is string && data.userFullName.size() >= 2 && data.userFullName.size() <= 120
+        && data.subject is string && data.subject.size() >= 3 && data.subject.size() <= 160
+        && data.category in ['courses', 'orders-billing', 'technical', 'general']
+        && data.priority in ['normal', 'high']
+        && data.status in ['open', 'in-progress', 'answered', 'closed']
+        && data.initialMessage is string && data.initialMessage.size() >= 5 && data.initialMessage.size() <= 3000
+        && isOptionalString(data, 'orderNumber', 40)
+        && data.lastReplyBy in ['user', 'admin']
+        && data.replyCount is number && data.replyCount >= 0 && data.replyCount <= 500
+        && isOptionalString(data, 'adminNotes', 2000)
+        && data.locale in ['en', 'fa']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp
+        && isOptionalTimestamp(data, 'lastReplyAt');
+    }
+
+    function isValidTicketMessage(data) {
+      return data.keys().hasAll([
+          'ticketId', 'ticketOwnerId', 'senderUid', 'senderName', 'senderRole', 'body', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'ticketId', 'ticketOwnerId', 'senderUid', 'senderName', 'senderRole', 'body', 'createdAt'
+        ])
+        && isValidId(data.ticketId)
+        && isValidId(data.ticketOwnerId)
+        && isValidId(data.senderUid)
+        && data.senderName is string && data.senderName.size() >= 2 && data.senderName.size() <= 120
+        && data.senderRole in ['user', 'admin']
+        && data.body is string && data.body.size() >= 2 && data.body.size() <= 3000
+        && data.createdAt is timestamp;
+    }
+
+    function parentTicketData(ticketId) {
+      return get(/databases/$(database)/documents/tickets/$(ticketId)).data;
+    }
+
+    // 1. Public site settings & customization (non-PII)
+    match /siteSettings/{settingId} {
+      allow get: if isValidId(settingId) && settingId == 'main';
+      allow create, update: if isValidId(settingId) && settingId == 'main' && isValidSiteSettings(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow delete: if false;
+    }
+
+    // 2. Compressed raster media assets (individual get by ID, admin-only create/delete, no list scraping)
+    match /mediaAssets/{mediaId} {
+      allow get: if isValidId(mediaId);
+      allow list: if false;
+      allow create: if isValidId(mediaId) && isValidMediaAsset(incoming()) && incoming().createdAt == request.time && isAdmin();
+      allow update: if false;
+      allow delete: if isValidId(mediaId) && isAdmin();
+    }
+
+    // 3. Projects catalog (published readable publicly, drafts staff-only)
+    match /projects/{projectId} {
+      allow get: if isValidId(projectId) && (existing().status == 'published' || isAdmin());
+      allow list: if existing().status == 'published' || isAdmin();
+      allow create: if isValidId(projectId) && isValidProject(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow update: if isValidId(projectId) && isValidProject(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow delete: if isValidId(projectId) && isAdmin();
+    }
+
+    // 4. Insights catalog (published readable publicly, drafts staff-only)
+    match /insights/{insightId} {
+      allow get: if isValidId(insightId) && (existing().status == 'published' || isAdmin());
+      allow list: if existing().status == 'published' || isAdmin();
+      allow create: if isValidId(insightId) && isValidInsight(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow update: if isValidId(insightId) && isValidInsight(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow delete: if isValidId(insightId) && isAdmin();
+    }
+
+    // 5. Team members (published readable publicly, drafts staff-only)
+    match /teamMembers/{memberId} {
+      allow get: if isValidId(memberId) && (existing().status == 'published' || isAdmin());
+      allow list: if existing().status == 'published' || isAdmin();
+      allow create: if isValidId(memberId) && isValidTeamMember(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow update: if isValidId(memberId) && isValidTeamMember(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow delete: if isValidId(memberId) && isAdmin();
+    }
+
+    // 5a. Partner & sponsor logos (published readable publicly, drafts & writes admin-only)
+    match /partnerLogos/{partnerId} {
+      allow get: if isValidId(partnerId) && (existing().status == 'published' || isAdmin());
+      allow list: if existing().status == 'published' || isAdmin();
+      allow create: if isValidId(partnerId) && isValidPartnerLogo(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow update: if isValidId(partnerId) && isValidPartnerLogo(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow delete: if isValidId(partnerId) && isAdmin();
+    }
+
+    // 5a-2. Modern building materials & technologies (published readable publicly, drafts & writes admin-only)
+    match /materials/{materialId} {
+      allow get: if isValidId(materialId) && (existing().status == 'published' || isAdmin());
+      allow list: if existing().status == 'published' || isAdmin();
+      allow create: if isValidId(materialId) && isValidMaterial(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow update: if isValidId(materialId) && isValidMaterial(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow delete: if isValidId(materialId) && isAdmin();
+    }
+
+    // 5b. ISB Academy courses catalog (published readable publicly, drafts & writes admin-only)
+    match /courses/{courseId} {
+      allow get: if isValidId(courseId) && (existing().status == 'published' || isAdmin());
+      allow list: if existing().status == 'published' || isAdmin();
+      allow create: if isValidId(courseId) && isValidCourse(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow update: if isValidId(courseId) && isValidCourse(incoming()) && incoming().updatedAt == request.time && isAdmin();
+      allow delete: if isValidId(courseId) && isAdmin();
+    }
+
+    // 6. Project inquiries (authenticated member create & owner-or-admin read so members receive replies, staff-only update/delete)
+    match /inquiries/{inquiryId} {
+      allow get: if isValidId(inquiryId) && (isAdmin() || (isAuthenticatedMember() && ('userId' in existing()) && existing().userId == request.auth.uid));
+      allow list: if isAdmin() || (isAuthenticatedMember() && resource.data.userId == request.auth.uid);
+      allow create: if isValidId(inquiryId)
+        && isAuthenticatedMember()
+        && isValidInquiry(incoming())
+        && ('userId' in incoming())
+        && incoming().userId == request.auth.uid
+        && incoming().internalStatus == 'new'
+        && !('adminReply' in incoming())
+        && !('adminNotes' in incoming())
+        && !('repliedAt' in incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(inquiryId)
+        && isValidInquiry(incoming())
+        && isAdmin()
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['internalStatus', 'adminReply', 'adminNotes', 'repliedAt'])
+        && (!('repliedAt' in incoming().diff(existing()).affectedKeys()) || incoming().repliedAt == request.time);
+      allow delete: if isValidId(inquiryId) && isAdmin();
+    }
+
+    // 7. Sustainability Lab assessment requests (authenticated member create & owner-or-admin read so members receive replies, staff-only update/delete)
+    match /assessmentRequests/{requestId} {
+      allow get: if isValidId(requestId) && (isAdmin() || (isAuthenticatedMember() && ('userId' in existing()) && existing().userId == request.auth.uid));
+      allow list: if isAdmin() || (isAuthenticatedMember() && resource.data.userId == request.auth.uid);
+      allow create: if isValidId(requestId)
+        && isAuthenticatedMember()
+        && isValidAssessmentRequest(incoming())
+        && ('userId' in incoming())
+        && incoming().userId == request.auth.uid
+        && incoming().internalStatus == 'new'
+        && !('adminReply' in incoming())
+        && !('adminNotes' in incoming())
+        && !('repliedAt' in incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(requestId)
+        && isValidAssessmentRequest(incoming())
+        && isAdmin()
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['internalStatus', 'adminReply', 'adminNotes', 'repliedAt'])
+        && (!('repliedAt' in incoming().diff(existing()).affectedKeys()) || incoming().repliedAt == request.time);
+      allow delete: if isValidId(requestId) && isAdmin();
+    }
+
+    // 8. Authorized staff registry
+    match /admins/{userId} {
+      allow get: if isValidId(userId) && (isAdmin() || (isVerifiedUser() && request.auth.uid == userId));
+      allow list: if isAdmin();
+      allow create: if isValidId(userId) && isValidAdminUser(incoming()) && incoming().createdAt == request.time && isAdmin();
+      allow update: if isValidId(userId) && isValidAdminUser(incoming()) && incoming().createdAt == existing().createdAt && incoming().diff(existing()).affectedKeys().hasOnly(['role']) && isAdmin();
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // 9. Member profiles & billing readiness (strict PII isolation: owner-or-admin only, non-escalatable role)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isAdmin() || (isAuthenticatedMember() && request.auth.uid == userId));
+      allow list: if isAdmin();
+      allow create: if isValidId(userId)
+        && isAuthenticatedMember()
+        && request.auth.uid == userId
+        && isValidUserProfile(incoming())
+        && incoming().uid == request.auth.uid
+        && incoming().role == 'member'
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && incoming().lastLoginAt == request.time;
+      allow update: if isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (
+            isAuthenticatedMember()
+            && request.auth.uid == userId
+            && incoming().role == existing().role
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'email', 'fullName', 'displayName', 'photoURL', 'phone',
+              'nationalId', 'city', 'organization', 'profession',
+              'billingAddress', 'locale', 'lastLoginAt', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isValidId(userId) && isAdmin();
+    }
+
+    // 10. Member course enrollments & orders (owner-or-admin read; member self-enrollment creates pending order or verified free course; member may attach paymentRef on pending order; admin verifies paid status)
+    match /orders/{orderId} {
+      allow get: if isValidId(orderId) && (isAdmin() || (isAuthenticatedMember() && existing().userId == request.auth.uid));
+      allow list: if isAdmin() || (isAuthenticatedMember() && resource.data.userId == request.auth.uid);
+      allow create: if isValidId(orderId)
+        && isValidUserOrder(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && (
+          (
+            isAdmin()
+            && exists(/databases/$(database)/documents/users/$(incoming().userId))
+          ) || (
+            isAuthenticatedMember()
+            && incoming().userId == request.auth.uid
+            && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+            && (
+              (
+                !('accessUrl' in incoming())
+                && incoming().paymentStatus == 'pending'
+                && !('paidAt' in incoming())
+              ) || (
+                incoming().amountToman == 0
+                && incoming().paymentStatus == 'paid'
+                && ('courseId' in incoming())
+                && exists(/databases/$(database)/documents/courses/$(incoming().courseId))
+                && get(/databases/$(database)/documents/courses/$(incoming().courseId)).data.priceToman == 0
+                && (
+                  !('accessUrl' in incoming())
+                  || (
+                    ('accessUrl' in get(/databases/$(database)/documents/courses/$(incoming().courseId)).data)
+                    && incoming().accessUrl == get(/databases/$(database)/documents/courses/$(incoming().courseId)).data.accessUrl
+                  )
+                )
+                && incoming().paidAt == request.time
+              )
+            )
+          )
+        );
+      allow update: if isValidId(orderId)
+        && isValidUserOrder(incoming())
+        && incoming().userId == existing().userId
+        && incoming().orderNumber == existing().orderNumber
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (
+            isAdmin()
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'itemType', 'titleFa', 'titleEn', 'amountToman', 'paymentStatus',
+              'paymentGateway', 'paymentRef', 'notes', 'accessUrl', 'paidAt', 'updatedAt'
+            ])
+          ) || (
+            isAuthenticatedMember()
+            && existing().userId == request.auth.uid
+            && existing().paymentStatus == 'pending'
+            && incoming().paymentStatus == 'pending'
+            && incoming().amountToman == existing().amountToman
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'paymentRef', 'paymentGateway', 'notes', 'updatedAt'
+            ])
+          )
+        );
+      allow delete: if isValidId(orderId) && isAdmin();
+    }
+
+    // 11. Member support tickets (owner-or-admin access, terminal closed-state lock for non-admins)
+    match /tickets/{ticketId} {
+      allow get: if isValidId(ticketId) && (isAdmin() || (isAuthenticatedMember() && existing().userId == request.auth.uid));
+      allow list: if isAdmin() || (isAuthenticatedMember() && resource.data.userId == request.auth.uid);
+      allow create: if isValidId(ticketId)
+        && isAuthenticatedMember()
+        && isValidSupportTicket(incoming())
+        && incoming().userId == request.auth.uid
+        && incoming().status == 'open'
+        && incoming().lastReplyBy == 'user'
+        && incoming().replyCount == 0
+        && !('adminNotes' in incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      allow update: if isValidId(ticketId)
+        && isValidSupportTicket(incoming())
+        && incoming().userId == existing().userId
+        && incoming().ticketNumber == existing().ticketNumber
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          (
+            isAdmin()
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'status', 'priority', 'adminNotes', 'lastReplyBy', 'replyCount', 'lastReplyAt', 'updatedAt'
+            ])
+          ) || (
+            isAuthenticatedMember()
+            && existing().userId == request.auth.uid
+            && existing().status != 'closed'
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'status', 'lastReplyBy', 'replyCount', 'lastReplyAt', 'updatedAt'
+            ])
+            && incoming().status in ['open', 'closed']
+            && incoming().lastReplyBy == 'user'
+            && incoming().replyCount >= existing().replyCount
+            && incoming().replyCount <= existing().replyCount + 1
+          )
+        );
+      allow delete: if isValidId(ticketId) && isAdmin();
+
+      // 11b. Immutable threaded replies inside each ticket (Master Gate synced with parent ticket)
+      match /messages/{messageId} {
+        allow get: if isValidId(ticketId) && isValidId(messageId) && (
+          isAdmin() || (isAuthenticatedMember() && existing().ticketOwnerId == request.auth.uid)
+        );
+        allow list: if isAdmin() || (isAuthenticatedMember() && resource.data.ticketOwnerId == request.auth.uid);
+        allow create: if isValidId(ticketId)
+          && isValidId(messageId)
+          && isValidTicketMessage(incoming())
+          && incoming().ticketId == ticketId
+          && incoming().createdAt == request.time
+          && exists(/databases/$(database)/documents/tickets/$(ticketId))
+          && incoming().ticketOwnerId == parentTicketData(ticketId).userId
+          && (
+            (isAdmin() && incoming().senderRole == 'admin' && incoming().senderUid == request.auth.uid) ||
+            (
+              isAuthenticatedMember()
+              && parentTicketData(ticketId).userId == request.auth.uid
+              && parentTicketData(ticketId).status != 'closed'
+              && incoming().senderRole == 'user'
+              && incoming().senderUid == request.auth.uid
+            )
+          );
+        allow update: if false;
+        allow delete: if isValidId(ticketId) && isValidId(messageId) && isAdmin();
+      }
+    }
+  }
+}

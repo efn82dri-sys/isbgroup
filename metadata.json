@@ -1,0 +1,8 @@
+{
+  "name": "ISB Group — Architecture, Energy & MEP, Structure & Seismic",
+  "description": "Bilingual architectural, energy performance, and structural engineering studio portfolio with interactive ISB Sustainable Town showcase, Sustainability Lab, project catalog, and inquiry intake.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

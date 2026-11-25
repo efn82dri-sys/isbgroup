@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /fa/studio
+Disallow: /en/studio
+Disallow: /fa/account
+Disallow: /en/account
+
+Sitemap: /sitemap.xml

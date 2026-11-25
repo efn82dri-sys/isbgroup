@@ -1,0 +1,540 @@
+@import "tailwindcss";
+
+/* Brand Persian Typeface — KalamehWeb (Full 9-Weight Architectural Family)
+   Scoped to Persian/Arabic script + punctuation + spaces so embedded Latin
+   brand marks (ISB, MEP, sDA, EUI) and technical units pair cleanly with the
+   English typeface (Manrope now, custom English brand font next). */
+@font-face {
+  font-family: "KalamehWeb";
+  src: url("/fonts/KalamehWeb-Thin.woff2") format("woff2");
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020, U+0028-0029, U+002E, U+003A, U+00AB, U+00B7, U+00BB, U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+2013-2014, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@font-face {
+  font-family: "KalamehWeb";
+  src: url("/fonts/KalamehWeb-ExtraLight.woff2") format("woff2");
+  font-weight: 200;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020, U+0028-0029, U+002E, U+003A, U+00AB, U+00B7, U+00BB, U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+2013-2014, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@font-face {
+  font-family: "KalamehWeb";
+  src: url("/fonts/KalamehWeb-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020, U+0028-0029, U+002E, U+003A, U+00AB, U+00B7, U+00BB, U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+2013-2014, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@font-face {
+  font-family: "KalamehWeb";
+  src: url("/fonts/KalamehWeb-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020, U+0028-0029, U+002E, U+003A, U+00AB, U+00B7, U+00BB, U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+2013-2014, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@font-face {
+  font-family: "KalamehWeb";
+  src: url("/fonts/KalamehWeb-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020, U+0028-0029, U+002E, U+003A, U+00AB, U+00B7, U+00BB, U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+2013-2014, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@font-face {
+  font-family: "KalamehWeb";
+  src: url("/fonts/KalamehWeb-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020, U+0028-0029, U+002E, U+003A, U+00AB, U+00B7, U+00BB, U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+2013-2014, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@font-face {
+  font-family: "KalamehWeb";
+  src: url("/fonts/KalamehWeb-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020, U+0028-0029, U+002E, U+003A, U+00AB, U+00B7, U+00BB, U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+2013-2014, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@font-face {
+  font-family: "KalamehWeb";
+  src: url("/fonts/KalamehWeb-ExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020, U+0028-0029, U+002E, U+003A, U+00AB, U+00B7, U+00BB, U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+2013-2014, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@font-face {
+  font-family: "KalamehWeb";
+  src: url("/fonts/KalamehWeb-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0020, U+0028-0029, U+002E, U+003A, U+00AB, U+00B7, U+00BB, U+0600-06FF, U+0750-077F, U+08A0-08FF, U+200C-200F, U+2013-2014, U+FB50-FDFF, U+FE70-FEFF;
+}
+
+@theme {
+  --font-en: "Manrope", system-ui, -apple-system, sans-serif;
+  --font-sans: var(--font-en);
+  --font-fa: "KalamehWeb", var(--font-en);
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-canvas: #080D16;
+  --color-surface-1: #0E1626;
+  --color-surface-2: #152036;
+  --color-ink: #F5F8FC;
+  --color-ink-muted: #C6D2E3;
+  --color-ink-subtle: #8B9DB7;
+  --color-champagne: #6F9BFF;
+  --color-olive: #28CF77;
+  /* Official ISB Catalog Brand Identity Palette */
+  --color-isb-cobalt: #223A87;
+  --color-isb-cobalt-bright: #6F9BFF;
+  --color-isb-emerald: #00A651;
+  --color-isb-emerald-bright: #28CF77;
+}
+
+@layer base {
+  html {
+    background-color: #080D16;
+    color: #F5F8FC;
+    font-family: var(--font-en);
+    scroll-behavior: smooth;
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html[lang="fa"] {
+    --font-sans: var(--font-fa);
+    font-family: var(--font-fa);
+    font-feature-settings: "kern" 1, "liga" 1;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Connected Persian/Arabic cursive glyphs must never receive non-zero tracking */
+  html[lang="fa"] h1,
+  html[lang="fa"] h2,
+  html[lang="fa"] h3,
+  html[lang="fa"] h4,
+  html[lang="fa"] p,
+  html[lang="fa"] a,
+  html[lang="fa"] button,
+  html[lang="fa"] label,
+  html[lang="fa"] li,
+  html[lang="fa"] input,
+  html[lang="fa"] textarea,
+  html[lang="fa"] select,
+  html[lang="fa"] span:not(.ltr-inline):not(.font-mono) {
+    letter-spacing: 0 !important;
+  }
+
+  /* Give Kalameh's tall geometric ascenders & diacritics generous vertical breathing room */
+  html[lang="fa"] h1 {
+    line-height: 1.28;
+  }
+
+  html[lang="fa"] h2 {
+    line-height: 1.36;
+  }
+
+  html[lang="fa"] h3 {
+    line-height: 1.45;
+  }
+
+  body {
+    background-color: #080D16;
+    color: #F5F8FC;
+    min-height: 100vh;
+    overflow-x: clip;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  a,
+  button,
+  input,
+  select,
+  textarea {
+    touch-action: manipulation;
+  }
+
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 2px solid #6F9BFF;
+    outline-offset: 2px;
+  }
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Architectural Cobalt & Emerald Frosted Glassmorphism System */
+@layer components {
+  .glass-surface {
+    background: linear-gradient(
+      140deg,
+      rgba(22, 38, 74, 0.44) 0%,
+      rgba(12, 20, 38, 0.56) 100%
+    );
+    backdrop-filter: blur(22px) saturate(145%);
+    -webkit-backdrop-filter: blur(22px) saturate(145%);
+    border: 1px solid rgba(154, 188, 255, 0.16);
+    box-shadow:
+      inset 0 1px 0 rgba(214, 230, 255, 0.18),
+      0 22px 54px -24px rgba(2, 6, 18, 0.78);
+  }
+
+  .glass-surface-strong {
+    background: linear-gradient(
+      145deg,
+      rgba(15, 25, 48, 0.80) 0%,
+      rgba(9, 15, 28, 0.74) 100%
+    );
+    backdrop-filter: blur(26px) saturate(160%);
+    -webkit-backdrop-filter: blur(26px) saturate(160%);
+    border: 1px solid rgba(154, 188, 255, 0.20);
+    box-shadow:
+      inset 0 1px 0 rgba(214, 230, 255, 0.22),
+      0 24px 60px -20px rgba(2, 6, 18, 0.82);
+  }
+
+  .glass-card {
+    background: linear-gradient(
+      140deg,
+      rgba(34, 58, 135, 0.16) 0%,
+      rgba(14, 22, 42, 0.52) 60%,
+      rgba(0, 166, 81, 0.05) 100%
+    );
+    backdrop-filter: blur(20px) saturate(145%);
+    -webkit-backdrop-filter: blur(20px) saturate(145%);
+    border: 1px solid rgba(154, 188, 255, 0.15);
+    box-shadow:
+      inset 0 1px 0 rgba(214, 230, 255, 0.16),
+      0 18px 44px -22px rgba(2, 6, 18, 0.72);
+    transition:
+      border-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 200ms cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .glass-card-hover:hover {
+    border-color: rgba(111, 155, 255, 0.48);
+    box-shadow:
+      inset 0 1px 0 rgba(220, 234, 255, 0.26),
+      0 22px 54px -20px rgba(10, 22, 60, 0.85);
+  }
+
+  .glass-card-active {
+    background: linear-gradient(
+      135deg,
+      rgba(34, 58, 135, 0.44) 0%,
+      rgba(0, 166, 81, 0.12) 56%,
+      rgba(11, 18, 34, 0.76) 100%
+    );
+    backdrop-filter: blur(24px) saturate(165%);
+    -webkit-backdrop-filter: blur(24px) saturate(165%);
+    border: 1px solid rgba(111, 155, 255, 0.58);
+    box-shadow:
+      inset 0 1px 0 rgba(218, 234, 255, 0.32),
+      0 20px 48px -18px rgba(16, 34, 92, 0.78);
+  }
+
+  .glass-pill {
+    background: linear-gradient(
+      135deg,
+      rgba(186, 210, 255, 0.11) 0%,
+      rgba(34, 58, 135, 0.12) 100%
+    );
+    backdrop-filter: blur(18px) saturate(150%);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    border: 1px solid rgba(176, 204, 255, 0.20);
+    box-shadow: inset 0 1px 0 rgba(226, 238, 255, 0.22);
+  }
+
+  .glass-overlay-dock {
+    background: linear-gradient(
+      155deg,
+      rgba(12, 20, 38, 0.68) 0%,
+      rgba(8, 13, 24, 0.84) 100%
+    );
+    backdrop-filter: blur(16px) saturate(145%);
+    -webkit-backdrop-filter: blur(16px) saturate(145%);
+    border: 1px solid rgba(162, 194, 255, 0.16);
+    box-shadow: inset 0 1px 0 rgba(214, 230, 255, 0.16);
+  }
+
+  .glass-input {
+    background: rgba(16, 26, 48, 0.55);
+    backdrop-filter: blur(14px) saturate(135%);
+    -webkit-backdrop-filter: blur(14px) saturate(135%);
+    border: 1px solid rgba(154, 188, 255, 0.18);
+    box-shadow: inset 0 1px 0 rgba(214, 230, 255, 0.08);
+  }
+
+  .glass-input:focus {
+    background: rgba(20, 34, 66, 0.72);
+    border-color: rgba(111, 155, 255, 0.82);
+    box-shadow:
+      inset 0 1px 0 rgba(220, 234, 255, 0.16),
+      0 0 0 3px rgba(34, 58, 135, 0.34);
+  }
+
+  /* Primary Action: Signature ISB Royal Cobalt (#223A87) with Crisp Pure White Typography */
+  .glass-cta {
+    background: linear-gradient(135deg, #2E52C4 0%, #223A87 56%, #182C6B 100%);
+    color: #FFFFFF;
+    border: 1px solid rgba(140, 178, 255, 0.52);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.34),
+      0 12px 30px -10px rgba(34, 58, 135, 0.78);
+  }
+
+  .glass-cta:hover {
+    background: linear-gradient(135deg, #375ED8 0%, #27449E 56%, #1D347C 100%);
+    border-color: rgba(168, 200, 255, 0.72);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      0 16px 36px -10px rgba(45, 82, 196, 0.85);
+  }
+
+  /* Secondary Brand Action: Signature ISB Sustainability Emerald (#00A651) with Pure White Typography */
+  .glass-cta-emerald {
+    background: linear-gradient(135deg, #00A651 0%, #008F45 58%, #007538 100%);
+    color: #FFFFFF;
+    border: 1px solid rgba(92, 236, 158, 0.48);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.32),
+      0 12px 28px -10px rgba(0, 166, 81, 0.65);
+  }
+
+  .glass-cta-emerald:hover {
+    background: linear-gradient(135deg, #08B85C 0%, #009D4C 58%, #00823E 100%);
+    border-color: rgba(128, 245, 182, 0.68);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.42),
+      0 16px 34px -10px rgba(0, 166, 81, 0.78);
+  }
+}
+
+.font-numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+.ltr-inline {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-family: var(--font-en);
+}
+
+@keyframes isb-logo-marquee {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.isb-logo-marquee-viewport {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 7%,
+    black 93%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 7%,
+    black 93%,
+    transparent 100%
+  );
+}
+
+.isb-logo-marquee-track {
+  display: flex;
+  width: max-content;
+  align-items: center;
+  will-change: transform;
+  animation: isb-logo-marquee 42s linear infinite;
+}
+
+.isb-logo-marquee-viewport:hover .isb-logo-marquee-track,
+.isb-logo-marquee-viewport:focus-within .isb-logo-marquee-track {
+  animation-play-state: paused;
+}
+
+/* Team Architectural Constellation — Fluid GPU-Composited Graphics */
+@keyframes isb-stream-flow {
+  0% {
+    stroke-dashoffset: 220;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes isb-orbit-cw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes isb-orbit-ccw {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes isb-halo-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.72;
+  }
+  50% {
+    transform: scale(1.06);
+    opacity: 1;
+  }
+}
+
+.isb-stream-pulse {
+  animation: isb-stream-flow 5.6s linear infinite;
+}
+
+.isb-stream-pulse-slow {
+  animation: isb-stream-flow 8.4s linear infinite;
+}
+
+.isb-orbit-cw {
+  transform-origin: center;
+  animation: isb-orbit-cw 54s linear infinite;
+  will-change: transform;
+}
+
+.isb-orbit-ccw {
+  transform-origin: center;
+  animation: isb-orbit-ccw 78s linear infinite;
+  will-change: transform;
+}
+
+.isb-halo-breathe {
+  animation: isb-halo-breathe 7.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.team-pavilion-shell {
+  background: linear-gradient(
+    152deg,
+    rgba(18, 31, 60, 0.56) 0%,
+    rgba(9, 16, 32, 0.82) 52%,
+    rgba(6, 11, 22, 0.92) 100%
+  );
+  backdrop-filter: blur(26px) saturate(155%);
+  -webkit-backdrop-filter: blur(26px) saturate(155%);
+  box-shadow:
+    inset 0 1px 0 rgba(214, 232, 255, 0.16),
+    inset 0 -1px 0 rgba(111, 155, 255, 0.06),
+    0 32px 72px -34px rgba(1, 5, 16, 0.92);
+}
+
+.team-monolith-card {
+  background: linear-gradient(
+    145deg,
+    rgba(24, 42, 82, 0.44) 0%,
+    rgba(11, 19, 37, 0.78) 62%,
+    rgba(8, 14, 27, 0.88) 100%
+  );
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(220, 236, 255, 0.18),
+    0 22px 48px -24px rgba(2, 6, 18, 0.88);
+}
+
+/* GPU-Friendly Mobile Frosted Glass Tuning — Identical Visual Depth, ~65% Lower GPU Fill-Rate */
+@media (max-width: 767px) {
+  .glass-surface {
+    backdrop-filter: blur(12px) saturate(135%);
+    -webkit-backdrop-filter: blur(12px) saturate(135%);
+  }
+  .glass-surface-strong {
+    backdrop-filter: blur(14px) saturate(145%);
+    -webkit-backdrop-filter: blur(14px) saturate(145%);
+  }
+  .glass-card,
+  .glass-card-active,
+  .team-monolith-card {
+    backdrop-filter: blur(10px) saturate(135%);
+    -webkit-backdrop-filter: blur(10px) saturate(135%);
+  }
+  .glass-pill,
+  .glass-overlay-dock,
+  .glass-input {
+    backdrop-filter: blur(10px) saturate(135%);
+    -webkit-backdrop-filter: blur(10px) saturate(135%);
+  }
+  .team-pavilion-shell {
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+  }
+}
+
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 540px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .isb-logo-marquee-viewport {
+    overflow-x: auto;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+
+  .isb-logo-marquee-track,
+  .isb-stream-pulse,
+  .isb-stream-pulse-slow,
+  .isb-orbit-cw,
+  .isb-orbit-ccw,
+  .isb-halo-breathe {
+    animation: none !important;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+  xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+  xmlns:xhtml="http://www.w3.org/1999/xhtml"
+>
+  <url>
+    <loc>/fa</loc>
+    <xhtml:link rel="alternate" hreflang="fa" href="/fa" />
+    <xhtml:link rel="alternate" hreflang="en" href="/en" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="/fa" />
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>/en</loc>
+    <xhtml:link rel="alternate" hreflang="fa" href="/fa" />
+    <xhtml:link rel="alternate" hreflang="en" href="/en" />
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>/fa/about</loc>
+    <xhtml:link rel="alternate" hreflang="fa" href="/fa/about" />
+    <xhtml:link rel="alternate" hreflang="en" href="/en/about" />
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>/fa/expertise</loc>
+    <xhtml:link rel="alternate" hreflang="fa" href="/fa/expertise" />
+    <xhtml:link rel="alternate" hreflang="en" href="/en/expertise" />
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>/fa/expertise/architecture-urbanism</loc>
+    <xhtml:link rel="alternate" hreflang="fa" href="/fa/expertise/architecture-urbanism" />
+    <xhtml:link rel="alternate" hreflang="en" href="/en/expertise/architecture-urbanism" />
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>/fa/expertise/energy-mep</loc>
+    <xhtml:link rel="alternate" hreflang="fa" href="/fa/expertise/energy-mep" />
+    <xhtml:link rel="alternate" hreflang="en" href="/en/expertise/energy-mep" />
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>/fa/expertise/structure-seismic</loc>
+    <xhtml:link rel="alternate" hreflang="fa" href="/fa/expertise/structure-seismic" />
+    <xhtml:link rel="alternate" hreflang="en" href="/en/expertise/structure-seismic" />
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>/fa/projects</loc>
+    <xhtml:link rel="alternate" hreflang="fa" href="/fa/projects" />
+    <xhtml:link rel="alternate" hreflang="en" href="/en/projects" />
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>/fa/sustainability-lab</loc>
+    <xhtml:link rel="alternate" hreflang="fa" href="/fa/sustainability-lab" />
+    <xhtml:link rel="alternate" hreflang="en" href="/en/sustainability-lab" />
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>/fa/courses</loc>
+    <xhtml:link rel="alternate" hreflang="fa" href="/fa/courses" />
+    <xhtml:link rel="alternate" hreflang="en" href="/en/courses" />
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>/fa/insights</loc>
+    <xhtml:link rel="alternate" hreflang="fa" href="/fa/insights" />
+    <xhtml:link rel="alternate" hreflang="en" href="/en/insights" />
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>/fa/contact</loc>
+    <xhtml:link rel="alternate" hreflang="fa" href="/fa/contact" />
+    <xhtml:link rel="alternate" hreflang="en" href="/en/contact" />
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+</urlset>
